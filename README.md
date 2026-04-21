@@ -26,17 +26,34 @@
 
 ```text
 myAssign1/
-├── info/                  # 原项目和参考资料，不参与运行
+├── docs/                  # 新手说明文档
+│   └── 新手复刻说明.md
 ├── main/                  # 主应用
-│   ├── models.py          # 数据模型：User、Offer
+│   ├── migrations/        # 数据库迁移文件
+│   │   ├── 0001_initial.py
+│   │   └── __init__.py
+│   ├── services/          # 业务逻辑
+│   │   ├── __init__.py
+│   │   ├── offer_services.py
+│   │   └── user_services.py
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
 │   ├── constants.py       # 常量和提示文本
 │   ├── lexer.py           # 命令解析器
+│   ├── models.py          # 数据模型：User、Offer
+│   ├── tests.py           # 基础测试
+│   ├── urls.py
 │   ├── views.py           # 微信请求入口
-│   ├── wechat_utils.py    # XML 回复和微信工具函数
-│   ├── services/          # 业务逻辑
-│   └── tests.py           # 基础测试
+│   └── wechat_utils.py    # XML 回复和微信工具函数
 ├── wechat_robot/          # Django 项目配置
-├── docs/                  # 新手说明文档
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── .gitignore
+├── README.md
 ├── manage.py              # Django 入口
 └── requirements.txt       # 依赖
 ```
@@ -91,10 +108,26 @@ wechat server is running
 help
 ```
 
+示例输出（公众号回复文本）：
+
+```text
+可用命令：
+1) help
+2) commit <company> <city> <position> <salary>
+3) query [--company X] [--city Y] [--position Z] [--min-salary N] [--max-salary N] [--sort-salary] [--page P]
+4) group-commit <company> <city> <position> <salary> ...（一次提交多条，参数每 4 个一组）
+```
+
 ### `commit`
 
 ```text
 commit Tencent Shenzhen Backend 30000
+```
+
+示例输出（公众号回复文本）：
+
+```text
+提交成功：Tencent Shenzhen Backend 30000
 ```
 
 ### `query`
@@ -106,10 +139,26 @@ query --company Tencent --sort-salary
 query --city Shenzhen --page 2
 ```
 
+示例输出（公众号回复文本，示例为 `query --city Shenzhen --sort-salary`）：
+
+```text
+查询结果（第 1/1 页，共 2 条）：
+1) Tencent | Shenzhen | Backend | 30000 | 2026-04-21 10:12
+2) ByteDance | Shenzhen | Backend | 28000 | 2026-04-21 10:05
+```
+
 ### `group-commit`
 
 ```text
 group-commit Tencent Shenzhen Backend 30000 Alibaba Beijing PM 25000
+```
+
+示例输出（公众号回复文本）：
+
+```text
+批量提交成功：2 条
+1) Tencent Shenzhen Backend 30000
+2) Alibaba Beijing PM 25000
 ```
 
 ## 6. 数据库里有什么表

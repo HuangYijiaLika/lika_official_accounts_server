@@ -1,3 +1,8 @@
+"""
+本文件提供与 Offer 相关的业务函数。
+包括：创建/批量创建 Offer、按条件过滤查询、以及分页与排序（按时间/按薪资）。
+"""
+
 import math
 
 from django.db.models import Q, QuerySet

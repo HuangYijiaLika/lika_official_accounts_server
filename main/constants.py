@@ -1,3 +1,8 @@
+"""
+本文件集中存放项目用到的常量与提示文本。
+包括：返回码、用户状态位、高频请求限制参数、以及给用户的固定回复文案。
+"""
+
 RETURN_STATE_SUCCESS = 0
 RETURN_STATE_NOT_FOUND_RECORD = 1
 RETURN_STATE_ARGUMENT_NOT_COMPLETE = 2

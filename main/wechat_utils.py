@@ -1,3 +1,8 @@
+"""
+本文件提供与“微信接口”相关的工具函数。
+包括：组装微信要求的 XML 回复（文本/图片）、GET 心跳/验证辅助、以及 access_token 的获取与缓存。
+"""
+
 import time
 from xml.sax.saxutils import escape
 

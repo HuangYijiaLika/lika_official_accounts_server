@@ -1,3 +1,8 @@
+"""
+本文件是项目的自动化测试。
+通过 Django TestCase 验证：命令解析、Offer 的批量写入与分页/排序、以及用户高频请求限制等核心逻辑。
+"""
+
 from django.test import TestCase
 
 from main.constants import AUTHORITY_CHECK_FAILED, AUTHORITY_CHECK_PASS

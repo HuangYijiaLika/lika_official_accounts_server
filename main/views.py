@@ -1,3 +1,8 @@
+"""
+本文件是 Django 的视图层（HTTP 请求入口）。
+主要职责：接收微信服务器发来的 GET/POST，解析 XML，分发到对应处理逻辑，并返回微信要求格式的 XML 回复。
+"""
+
 from pathlib import Path
 from xml.etree import ElementTree
 

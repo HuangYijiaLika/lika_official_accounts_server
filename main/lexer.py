@@ -1,3 +1,8 @@
+"""
+本文件是“命令解析器”（lexer）。
+把用户发来的文本（如 help / commit / query / group-commit）解析成结构化 dict，供 views/services 调用。
+"""
+
 import re
 
 

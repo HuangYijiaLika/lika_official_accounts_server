@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""
+本文件是 Django 项目的命令行入口。
+常用：python manage.py runserver / migrate / test / createsuperuser 等。
+"""
+
 import os
 import sys
 

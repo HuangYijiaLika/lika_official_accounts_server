@@ -1,3 +1,8 @@
+"""
+本文件是 Django 项目的核心配置（settings）。
+包括：安装的应用、数据库配置（SQLite）、中间件、语言/时区、以及微信相关配置占位等。
+"""
+
 from pathlib import Path
 
 

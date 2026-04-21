@@ -1,3 +1,8 @@
+"""
+本文件定义数据库里的数据模型（表结构）。
+这里的 User/Offer 会通过 Django ORM 映射到数据库表，并由迁移文件创建/变更真实表结构。
+"""
+
 from django.db import models
 
 from .constants import USER_STATE_DEFAULT

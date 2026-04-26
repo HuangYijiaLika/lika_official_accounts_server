@@ -3,9 +3,11 @@
 通过 Django TestCase 验证：命令解析、Offer 的批量写入与分页/排序、以及用户高频请求限制等核心逻辑。
 """
 
+from datetime import timedelta
 from unittest import mock
 
 from django.test import TestCase
+from django.utils import timezone
 
 from main.constants import AUTHORITY_CHECK_FAILED, AUTHORITY_CHECK_PASS
 from main.lexer import parse_command
@@ -15,7 +17,9 @@ from main.services.offer_services import (
     create_offer,
     delete_all_offers_by_username,
     delete_offer_by_public_id,
+    get_user_offer_stats,
     get_offer_by_public_id,
+    list_latest_offers,
     list_offers_with_page,
     replace_offer_by_public_id,
     update_offer_by_public_id,
@@ -76,6 +80,36 @@ class LexerTests(TestCase):
         """验证 delete --all 与 delete <id> 能被正确解析。"""
         self.assertEqual(parse_command("delete --all"), {"command": "delete_all"})
         self.assertEqual(parse_command("delete 1a2b3c4d"), {"command": "delete_one", "id": "1a2b3c4d"})
+
+    def test_ping_command_can_be_parsed(self) -> None:
+        """验证 ping 命令能被正确解析。"""
+        self.assertEqual(parse_command("ping"), {"command": "ping"})
+
+    def test_stats_command_can_be_parsed(self) -> None:
+        """验证 stats 命令能被正确解析。"""
+        self.assertEqual(parse_command("stats"), {"command": "stats"})
+
+    def test_my_command_can_be_parsed(self) -> None:
+        """验证 my 命令及分页参数能被正确解析。"""
+        self.assertEqual(parse_command("my"), {"command": "my", "page": None})
+        self.assertEqual(parse_command("my --page 2"), {"command": "my", "page": 2})
+
+    def test_my_rejects_unknown_args(self) -> None:
+        """验证 my 不接受 query 风格的过滤参数。"""
+        self.assertIsNone(parse_command("my --city Shenzhen"))
+
+    def test_latest_command_can_be_parsed(self) -> None:
+        """验证 latest 命令及可选 N 能被正确解析。"""
+        self.assertEqual(parse_command("latest"), {"command": "latest", "n": None})
+        self.assertEqual(parse_command("latest 10"), {"command": "latest", "n": 10})
+
+    def test_latest_rejects_non_int(self) -> None:
+        """验证 latest 的 N 必须是整数。"""
+        self.assertIsNone(parse_command("latest abc"))
+
+    def test_help_one_command_can_be_parsed(self) -> None:
+        """验证 help <command> 能被正确解析。"""
+        self.assertEqual(parse_command("help query"), {"command": "help_one", "target": "query"})
 
     def test_edit_update_rejects_unknown_field(self) -> None:
         """验证 edit update 不允许未知字段名。"""
@@ -226,6 +260,53 @@ class OfferServiceTests(TestCase):
         self.assertEqual(count, 2)
         self.assertEqual(Offer.objects.filter(from_user__username="alice").count(), 0)
         self.assertEqual(Offer.objects.filter(from_user__username="bob").count(), 1)
+
+    def test_list_offers_with_page_can_filter_by_from_user(self) -> None:
+        """验证 list_offers_with_page 支持 from_user 过滤。"""
+        create_offer({"company": "A", "city": "B", "position": "C", "salary": 1}, "alice")
+        create_offer({"company": "D", "city": "E", "position": "F", "salary": 2}, "bob")
+        results, _, _ = list_offers_with_page({"from_user": "alice"})
+        self.assertTrue(all(offer.from_user and offer.from_user.username == "alice" for offer in results))
+
+    def test_get_user_offer_stats_works(self) -> None:
+        """验证 stats 聚合结果正确。"""
+        p1 = create_offer({"company": "A", "city": "B", "position": "C", "salary": 100}, "alice")
+        p2 = create_offer({"company": "A", "city": "B", "position": "C", "salary": 200}, "alice")
+        p3 = create_offer({"company": "A", "city": "B", "position": "C", "salary": 300}, "alice")
+
+        base = timezone.now()
+        t1 = base - timedelta(days=2)
+        t2 = base - timedelta(days=1)
+        t3 = base
+        Offer.objects.filter(public_id=p1).update(created_at=t1)
+        Offer.objects.filter(public_id=p2).update(created_at=t2)
+        Offer.objects.filter(public_id=p3).update(created_at=t3)
+
+        stats = get_user_offer_stats("alice")
+        self.assertEqual(stats["count"], 3)
+        self.assertEqual(stats["min_salary"], 100)
+        self.assertEqual(stats["max_salary"], 300)
+        self.assertAlmostEqual(float(stats["avg_salary"]), 200.0, places=2)
+        self.assertEqual(stats["last_created_at"], t3)
+
+    def test_list_latest_offers_returns_latest_first(self) -> None:
+        """验证 latest 按 created_at 倒序返回。"""
+        p1 = create_offer({"company": "A", "city": "B", "position": "C", "salary": 1}, "alice")
+        p2 = create_offer({"company": "D", "city": "E", "position": "F", "salary": 2}, "alice")
+        p3 = create_offer({"company": "X", "city": "Y", "position": "Z", "salary": 3}, "alice")
+
+        base = timezone.now()
+        t1 = base - timedelta(days=2)
+        t2 = base - timedelta(days=1)
+        t3 = base
+        Offer.objects.filter(public_id=p1).update(created_at=t1)
+        Offer.objects.filter(public_id=p2).update(created_at=t2)
+        Offer.objects.filter(public_id=p3).update(created_at=t3)
+
+        results = list_latest_offers(2)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].public_id, p3)
+        self.assertEqual(results[1].public_id, p2)
 
 
 class UserServiceTests(TestCase):

@@ -91,6 +91,26 @@ def parse_command(command: str) -> dict | None:
     if delete_match:
         return {"command": "delete_one", "id": delete_match.group(1)}
 
+    if re.fullmatch(r"ping", command):
+        return {"command": "ping"}
+
+    if re.fullmatch(r"stats", command):
+        return {"command": "stats"}
+
+    my_match = re.fullmatch(r"my(?:\s+--page\s+(\d+))?", command)
+    if my_match:
+        page = int(my_match.group(1)) if my_match.group(1) is not None else None
+        return {"command": "my", "page": page}
+
+    latest_match = re.fullmatch(r"latest(?:\s+(\d+))?", command)
+    if latest_match:
+        n = int(latest_match.group(1)) if latest_match.group(1) is not None else None
+        return {"command": "latest", "n": n}
+
+    help_one_match = re.fullmatch(r"help\s+(\S+)", command)
+    if help_one_match:
+        return {"command": "help_one", "target": help_one_match.group(1)}
+
     if re.fullmatch(r"help", command):
         return {"command": "help"}
 

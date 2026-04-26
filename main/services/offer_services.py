@@ -6,7 +6,7 @@
 import math
 import zlib
 
-from django.db.models import Q, QuerySet
+from django.db.models import Avg, Count, Max, Min, Q, QuerySet
 
 from main.constants import RECORDS_PER_PAGE, RETURN_STATE_SUCCESS
 from main.models import Offer
@@ -144,6 +144,23 @@ def delete_all_offers_by_username(username: str) -> int:
     return Offer.objects.filter(from_user__username=username).delete()[0]
 
 
+def list_latest_offers(n: int) -> QuerySet[Offer]:
+    """按 created_at 倒序返回最新 n 条 Offer。"""
+    return Offer.objects.order_by("-created_at")[:n]
+
+
+def get_user_offer_stats(username: str) -> dict:
+    """统计 username 提交的 Offer：数量、最近提交时间、最高/最低/平均薪资。"""
+    result = Offer.objects.filter(from_user__username=username).aggregate(
+        count=Count("id"),
+        last_created_at=Max("created_at"),
+        max_salary=Max("salary"),
+        min_salary=Min("salary"),
+        avg_salary=Avg("salary"),
+    )
+    return result
+
+
 def list_offers(filters: dict) -> QuerySet[Offer]:
     """按 filters 过滤并排序 Offer（不分页）。"""
     query = Q()
@@ -151,6 +168,10 @@ def list_offers(filters: dict) -> QuerySet[Offer]:
         value = filters.get(field)
         if value is not None:
             query &= Q(**{field: value})
+
+    from_user = filters.get("from_user")
+    if from_user is not None:
+        query &= Q(from_user__username=from_user)
 
     results = Offer.objects.filter(query)
     if filters.get("sort-new"):

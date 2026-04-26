@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from main.constants import (
     AUTHORITY_CHECK_PASS,
+    HELP_BY_COMMAND,
     MESSAGE_COMMIT_SUCCESS,
     MESSAGE_HELLO,
     MESSAGE_HELP,
@@ -29,8 +30,10 @@ from main.services import (
     create_user,
     delete_all_offers_by_username,
     delete_offer_by_public_id,
+    get_user_offer_stats,
     get_user,
     get_offer_by_public_id,
+    list_latest_offers,
     list_offers_with_page,
     replace_offer_by_public_id,
     update_offer_by_public_id,
@@ -114,8 +117,53 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
         return MESSAGE_NO_PERMISSION
 
     command = tokens["command"]
+    if command == "ping":
+        return "pong"
     if command == "help":
         return MESSAGE_HELP
+    if command == "help_one":
+        target = tokens["target"]
+        message = HELP_BY_COMMAND.get(target)
+        if message is None:
+            return f"未知命令：{target}\n\n{MESSAGE_HELP}"
+        return message
+    if command == "stats":
+        stats = get_user_offer_stats(from_user)
+        count = int(stats.get("count") or 0)
+        if count == 0:
+            return "你还没有提交过 Offer。"
+        last_created_at = stats.get("last_created_at")
+        last_text = last_created_at.isoformat(sep=" ", timespec="seconds") if last_created_at else ""
+        avg_salary = stats.get("avg_salary")
+        avg_salary_text = str(int(round(avg_salary))) if avg_salary is not None else ""
+        return "\n".join(
+            [
+                "我的统计：",
+                f"count: {count}",
+                f"last_created_at: {last_text}",
+                f"max_salary: {stats.get('max_salary')}",
+                f"min_salary: {stats.get('min_salary')}",
+                f"avg_salary: {avg_salary_text}",
+            ]
+        )
+    if command == "my":
+        offers, current_page, page_count = list_offers_with_page(
+            {"from_user": from_user, "page": tokens.get("page"), "sort-new": True}
+        )
+        lines = [f"我的 Offer（第 {current_page} / {page_count} 页）", "{"]
+        for offer in offers:
+            lines.append(f"  {offer}")
+        lines.append("}")
+        return "\n".join(lines)
+    if command == "latest":
+        n = tokens.get("n") or 5
+        n = min(max(int(n), 1), 20)
+        offers = list_latest_offers(n)
+        lines = [f"最新 {len(offers)} 条 Offer", "{"]
+        for offer in offers:
+            lines.append(f"  {offer}")
+        lines.append("}")
+        return "\n".join(lines)
     if command == "commit":
         public_id = create_offer(tokens, from_user)
         return f"{MESSAGE_COMMIT_SUCCESS}\nID: {public_id}"

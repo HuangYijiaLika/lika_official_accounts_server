@@ -17,18 +17,22 @@ FILTER_FIELDS = ("company", "city", "position")
 
 
 def _compute_public_id(base: str) -> str:
+    """对 base 字符串计算 CRC32，并返回固定 8 位十六进制字符串。"""
     value = zlib.crc32(base.encode("utf-8")) & 0xFFFFFFFF
     return format(value, "08x")
 
 
 def generate_offer_public_id(offer: Offer, username: str) -> str:
+    """为 offer 生成 public_id；如发生碰撞则追加 #n 后缀重算直到唯一。"""
     created_at = offer.created_at.isoformat()
+    # public_id 的输入串：6 个字段按约定顺序，用 | 连接
     base = f"{offer.company}|{offer.city}|{offer.position}|{offer.salary}|{created_at}|{username}"
 
     candidate = _compute_public_id(base)
     if not Offer.objects.filter(public_id=candidate).exists():
         return candidate
 
+    # CRC32 可能碰撞：发现已存在时，追加 #n 后缀并重算，直到找到未占用的值
     suffix = 1
     while True:
         candidate = _compute_public_id(f"{base}#{suffix}")
@@ -38,6 +42,7 @@ def generate_offer_public_id(offer: Offer, username: str) -> str:
 
 
 def create_offer(data: dict, username: str) -> str:
+    """创建一条 Offer，并返回其 public_id。"""
     user = get_user(username)
     offer = Offer.objects.create(
         company=data["company"],
@@ -52,6 +57,7 @@ def create_offer(data: dict, username: str) -> str:
 
 
 def batch_create_offers(items: list[dict], username: str) -> list[str]:
+    """批量创建 Offer，按输入顺序返回每条的 public_id 列表。"""
     user = get_user(username)
     public_ids: list[str] = []
     for item in items:
@@ -69,6 +75,7 @@ def batch_create_offers(items: list[dict], username: str) -> list[str]:
 
 
 def get_offer_by_public_id(public_id: str) -> Offer | None:
+    """按 public_id 查询 Offer（不区分大小写）；找不到返回 None。"""
     value = public_id.strip().lower()
     if not value:
         return None
@@ -76,12 +83,14 @@ def get_offer_by_public_id(public_id: str) -> Offer | None:
 
 
 def _check_offer_owner(offer: Offer, username: str) -> bool:
+    """判断 offer 的 from_user 是否为 username（用于权限校验）。"""
     if offer.from_user is None:
         return False
     return offer.from_user.username == username
 
 
 def update_offer_by_public_id(public_id: str, username: str, updates: dict) -> Offer | bool | None:
+    """按 public_id 更新指定字段；返回 Offer / False(无权限) / None(未找到)。"""
     offer = get_offer_by_public_id(public_id)
     if offer is None:
         return None
@@ -104,6 +113,7 @@ def update_offer_by_public_id(public_id: str, username: str, updates: dict) -> O
 def replace_offer_by_public_id(
     public_id: str, username: str, company: str, city: str, position: str, salary: int
 ) -> Offer | bool | None:
+    """按 public_id 整体替换四个字段；返回 Offer / False(无权限) / None(未找到)。"""
     offer = get_offer_by_public_id(public_id)
     if offer is None:
         return None
@@ -119,6 +129,7 @@ def replace_offer_by_public_id(
 
 
 def delete_offer_by_public_id(public_id: str, username: str) -> bool | None:
+    """按 public_id 删除 Offer；返回 True(成功)/False(无权限)/None(未找到)。"""
     offer = get_offer_by_public_id(public_id)
     if offer is None:
         return None
@@ -129,10 +140,12 @@ def delete_offer_by_public_id(public_id: str, username: str) -> bool | None:
 
 
 def delete_all_offers_by_username(username: str) -> int:
+    """删除 username 创建的全部 Offer，返回删除条数。"""
     return Offer.objects.filter(from_user__username=username).delete()[0]
 
 
 def list_offers(filters: dict) -> QuerySet[Offer]:
+    """按 filters 过滤并排序 Offer（不分页）。"""
     query = Q()
     for field in FILTER_FIELDS:
         value = filters.get(field)
@@ -148,6 +161,7 @@ def list_offers(filters: dict) -> QuerySet[Offer]:
 
 
 def list_offers_with_page(filters: dict) -> tuple[QuerySet[Offer], int, int]:
+    """按 filters 查询 Offer 并分页，返回（当前页结果、当前页、总页数）。"""
     results = list_offers(filters)
     total = results.count()
     page_count = max(1, math.ceil(total / RECORDS_PER_PAGE))

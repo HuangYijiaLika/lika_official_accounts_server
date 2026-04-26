@@ -48,6 +48,7 @@ PICS_DIR = Path(__file__).resolve().parent / "pics"
 
 @csrf_exempt
 def wechat_main(request: HttpRequest) -> HttpResponse:
+    """微信公众号入口：处理 GET 心跳/验证与 POST 消息分发。"""
     try:
         get_access_token()
     except Exception:
@@ -61,6 +62,7 @@ def wechat_main(request: HttpRequest) -> HttpResponse:
 
 
 def wechat_distributor(request: HttpRequest) -> HttpResponse:
+    """解析微信 XML，按消息类型（text/image）分发到对应处理函数。"""
     xml_data = ElementTree.fromstring(request.body)
     msg_type = xml_data.findtext("MsgType", default="")
     from_user = xml_data.findtext("FromUserName", default="")
@@ -76,6 +78,7 @@ def wechat_distributor(request: HttpRequest) -> HttpResponse:
 
 
 def handle_text_message(xml_data: ElementTree.Element, from_user: str, to_user: str) -> HttpResponse:
+    """处理微信文本消息：解析命令、执行业务逻辑、返回文本回复 XML。"""
     if get_user(from_user) is None:
         create_user(from_user)
 
@@ -88,6 +91,7 @@ def handle_text_message(xml_data: ElementTree.Element, from_user: str, to_user: 
 
 
 def handle_image_message(xml_data: ElementTree.Element, from_user: str, to_user: str) -> HttpResponse:
+    """处理微信图片消息：下载保存图片，并按微信要求返回图片回复 XML。"""
     media_id = xml_data.findtext("MediaId", default="")
     pic_url = xml_data.findtext("PicUrl", default="")
 
@@ -105,6 +109,7 @@ def handle_image_message(xml_data: ElementTree.Element, from_user: str, to_user:
 
 
 def wechat_command_distributor(from_user: str, tokens: dict) -> str:
+    """按 tokens["command"] 分发到对应业务处理，并返回最终要回复的文本内容。"""
     if check_user_state(from_user, tokens["command"], update=True) != AUTHORITY_CHECK_PASS:
         return MESSAGE_NO_PERMISSION
 
@@ -151,6 +156,7 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
 
 
 def _format_offer_detail(title: str, offer) -> str:
+    """把 Offer 格式化为多行可读文本（用于 query/edit 的详情输出）。"""
     username = offer.from_user.username if offer.from_user else ""
     created_at = offer.created_at.isoformat(sep=" ", timespec="seconds")
     return "\n".join(
@@ -168,6 +174,7 @@ def _format_offer_detail(title: str, offer) -> str:
 
 
 def format_query_result(tokens: dict) -> str:
+    """格式化查询结果：支持 query --id 单条详情，以及普通分页列表。"""
     public_id = tokens.get("id")
     if public_id:
         offer = get_offer_by_public_id(public_id)

@@ -16,6 +16,7 @@ expire_time = 0.0
 
 
 def build_text_reply(to_user: str, from_user: str, content: str) -> str:
+    """生成微信 text 类型回复的 XML 字符串。"""
     safe_content = escape(content)
     return f"""<xml>
 <ToUserName><![CDATA[{to_user}]]></ToUserName>
@@ -27,6 +28,7 @@ def build_text_reply(to_user: str, from_user: str, content: str) -> str:
 
 
 def build_image_reply(to_user: str, from_user: str, media_id: str) -> str:
+    """生成微信 image 类型回复的 XML 字符串。"""
     return f"""<xml>
 <ToUserName><![CDATA[{to_user}]]></ToUserName>
 <FromUserName><![CDATA[{from_user}]]></FromUserName>
@@ -39,6 +41,7 @@ def build_image_reply(to_user: str, from_user: str, media_id: str) -> str:
 
 
 def wechat_heartbeat(request: HttpRequest) -> HttpResponse:
+    """处理微信服务器 GET 验证：有 echostr 返回 echostr，否则返回运行提示。"""
     echostr = request.GET.get("echostr")
     if echostr:
         return HttpResponse(echostr)
@@ -46,6 +49,7 @@ def wechat_heartbeat(request: HttpRequest) -> HttpResponse:
 
 
 def get_access_token() -> str:
+    """获取并缓存微信 access_token；未配置 appid/secret 时返回空字符串。"""
     global access_token, expire_time
 
     app_id = settings.WECHAT_APP_ID

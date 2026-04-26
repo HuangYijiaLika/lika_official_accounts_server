@@ -14,6 +14,7 @@ class User(models.Model):
     request_queue = models.CharField(max_length=1024, default="[]")
 
     def __str__(self) -> str:
+        """在日志/admin 等场景中显示该用户的简短描述。"""
         return f"User({self.username}, state={self.state})"
 
 
@@ -27,4 +28,5 @@ class Offer(models.Model):
     public_id = models.CharField(max_length=8, unique=True, db_index=True, null=True, blank=True)
 
     def __str__(self) -> str:
+        """在日志/admin 等场景中显示该 Offer 的简短描述。"""
         return f"Offer({self.company}, {self.city}, {self.position}, {self.salary})"

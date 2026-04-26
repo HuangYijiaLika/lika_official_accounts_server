@@ -7,6 +7,7 @@ import re
 
 
 def match_optional_text(pattern: str, command: str) -> str | None:
+    """在 command 中用正则 pattern 搜索可选文本参数，返回捕获组 1 或 None。"""
     match = re.search(pattern, command)
     if match:
         return match.group(1)
@@ -14,6 +15,7 @@ def match_optional_text(pattern: str, command: str) -> str | None:
 
 
 def match_optional_int(pattern: str, command: str) -> int | None:
+    """在 command 中用正则 pattern 搜索可选整数参数，返回 int 或 None。"""
     match = re.search(pattern, command)
     if match:
         return int(match.group(1))
@@ -21,14 +23,19 @@ def match_optional_int(pattern: str, command: str) -> int | None:
 
 
 def has_flag(pattern: str, command: str) -> bool:
+    """判断 command 中是否存在匹配 pattern 的标志位。"""
     return re.search(pattern, command) is not None
 
 
 def parse_command(command: str) -> dict | None:
+    """把用户输入命令解析为 tokens dict；解析失败返回 None。"""
     command = command.strip()
     if not command:
         return None
 
+    # edit 有两种形态：
+    # 1) edit <id> --field value [--field value...]
+    # 2) edit <id> <company> <city> <position> <salary>
     edit_match = re.fullmatch(r"edit\s+(\S+)(.*)", command)
     if edit_match:
         public_id = edit_match.group(1)
@@ -37,6 +44,7 @@ def parse_command(command: str) -> dict | None:
             return None
 
         if rest.startswith("--"):
+            # update 形态：参数必须成对出现，且字段名只能在白名单内
             parts = rest.split()
             if len(parts) % 2 != 0:
                 return None
@@ -61,6 +69,7 @@ def parse_command(command: str) -> dict | None:
                 return None
             return {"command": "edit_update", "id": public_id, "updates": updates}
 
+        # replace 形态：必须恰好 4 个字段，且 salary 为整数
         replace_match = re.fullmatch(r"(\S+)\s+(\S+)\s+(\S+)\s+(\d+)", rest)
         if not replace_match:
             return None
@@ -77,6 +86,7 @@ def parse_command(command: str) -> dict | None:
     if re.fullmatch(r"delete\s+--all", command):
         return {"command": "delete_all"}
 
+    # delete <id>
     delete_match = re.fullmatch(r"delete\s+(\S+)", command)
     if delete_match:
         return {"command": "delete_one", "id": delete_match.group(1)}
@@ -95,6 +105,7 @@ def parse_command(command: str) -> dict | None:
             "salary": int(salary),
         }
 
+    # query 支持多种可选参数（--id / --company / --city / --position / --page / sort flags）
     if re.match(r"query\b", command):
         return {
             "command": "query",

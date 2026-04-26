@@ -21,14 +21,17 @@ from main.models import User
 
 
 def get_user(username: str) -> User | None:
+    """按 username 查询用户；不存在返回 None。"""
     return User.objects.filter(username=username).first()
 
 
 def create_user(username: str) -> User:
+    """创建并返回一个新用户。"""
     return User.objects.create(username=username)
 
 
 def get_user_state(username: str) -> int | None:
+    """获取用户 state；用户不存在返回 None。"""
     user = get_user(username)
     if user is None:
         return None
@@ -36,6 +39,7 @@ def get_user_state(username: str) -> int | None:
 
 
 def reset_user_state(username: str) -> int:
+    """重置用户状态与请求队列（用户不存在也视为成功）。"""
     user = get_user(username)
     if user is None:
         return RETURN_STATE_SUCCESS
@@ -46,6 +50,7 @@ def reset_user_state(username: str) -> int:
 
 
 def update_user_state(username: str, state: int) -> int:
+    """设置用户 state（不存在则先创建）。"""
     user = get_user(username)
     if user is None:
         user = create_user(username)
@@ -55,6 +60,7 @@ def update_user_state(username: str, state: int) -> int:
 
 
 def _load_request_queue(user: User) -> list[int]:
+    """从 user.request_queue 解析最近请求时间戳列表；异常时返回空列表。"""
     try:
         queue = json.loads(user.request_queue)
     except json.JSONDecodeError:
@@ -65,11 +71,13 @@ def _load_request_queue(user: User) -> list[int]:
 
 
 def _save_request_queue(user: User, queue: list[int]) -> None:
+    """把请求时间戳列表写回 user.request_queue 并保存。"""
     user.request_queue = json.dumps(queue)
     user.save()
 
 
 def check_user_state(username: str, command: str, update: bool = False) -> int:
+    """检查用户是否可继续使用；可选更新高频请求队列并触发封禁标记。"""
     del command
 
     user = get_user(username)

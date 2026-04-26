@@ -143,22 +143,25 @@ help
 6. commit <公司> <城市> <岗位> <薪资>
    提交一条 Offer
 
-7. query [--id ID] [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]
-   查询 Offer
+7. query [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]
+   查询 Offer（分页列表）
 
-8. group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...
+8. detail <id>
+   查看某条 Offer 详情
+
+9. group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...
    一次提交多条 Offer
 
-9. edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]
-   编辑一条 Offer（按字段更新，至少提供 1 个字段）
+10. edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]
+    编辑一条 Offer（按字段更新，至少提供 1 个字段）
 
-10. edit <id> <公司> <城市> <岗位> <薪资>
+11. edit <id> <公司> <城市> <岗位> <薪资>
     编辑一条 Offer（整体替换）
 
-11. delete <id>
+12. delete <id>
     删除一条 Offer（只能删除自己提交的）
 
-12. delete --all
+13. delete --all
     删除你提交的所有 Offer
 ```
 
@@ -171,8 +174,8 @@ help query
 示例输出（公众号回复文本）：
 
 ```text
-query [--id ID] [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]
-查询 Offer；当使用 --id 时返回单条详情。
+query [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]
+查询 Offer（分页列表）。
 ```
 
 ### `ping`

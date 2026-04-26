@@ -20,11 +20,11 @@ REQUEST_QUEUE_LIMIT_SIZE = 30
 
 RECORDS_PER_PAGE = 10
 
-MESSAGE_HELLO = "你好！"
+MESSAGE_HELLO = "========================="
 MESSAGE_UNKNOWN_COMMAND = "这个命令我没有看懂。"
 MESSAGE_COMMIT_SUCCESS = "收到啦，这条 Offer 已经保存。"
 MESSAGE_VALUE_ERROR = "参数格式不对，请检查是不是把薪资写成了整数。"
-MESSAGE_ONLY_TEXT_OR_IMAGE = "目前只支持文本消息和图片消息。"
+MESSAGE_INIT = "欢迎关注！发送“help”查看使用指南。"
 MESSAGE_NO_PERMISSION = "你的账号目前不能继续使用查询功能。"
 MESSAGE_NOT_OWNER = "只能操作自己提交的 Offer。"
 MESSAGE_OFFER_NOT_FOUND = "没有找到对应的 Offer。"
@@ -36,7 +36,8 @@ HELP_BY_COMMAND = {
     "my": "my [--page 页码]\n只查看我提交的 Offer（支持分页）。",
     "latest": "latest [N]\n查看全库最新 N 条 Offer（默认 5，最大 20），按 created_at 倒序。",
     "commit": "commit <公司> <城市> <岗位> <薪资>\n提交一条 Offer，并返回该条 Offer 的 8 位 ID。",
-    "query": "query [--id ID] [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]\n查询 Offer；当使用 --id 时返回单条详情。",
+    "query": "query [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]\n查询 Offer（分页列表）。",
+    "detail": "detail <id>\n查看某条 Offer 的详情（与 edit 成功后的展示一致）。",
     "group-commit": "group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...\n一次提交多条 Offer，并返回每条的 8 位 ID。",
     "edit": "edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]\n按字段更新；或 edit <id> <公司> <城市> <岗位> <薪资> 整体替换。",
     "delete": "delete <id>\n删除一条 Offer；或 delete --all 删除我提交的所有 Offer。",
@@ -62,21 +63,24 @@ MESSAGE_HELP = """简易版 Offer Show 命令说明
 6. commit <公司> <城市> <岗位> <薪资>
    提交一条 Offer
 
-7. query [--id ID] [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]
-   查询 Offer
+7. query [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]
+   查询 Offer（分页列表）
 
-8. group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...
+8. detail <id>
+   查看某条 Offer 详情
+
+9. group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...
    一次提交多条 Offer
 
-9. edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]
-   编辑一条 Offer（按字段更新，至少提供 1 个字段）
+10. edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]
+    编辑一条 Offer（按字段更新，至少提供 1 个字段）
 
-10. edit <id> <公司> <城市> <岗位> <薪资>
+11. edit <id> <公司> <城市> <岗位> <薪资>
     编辑一条 Offer（整体替换）
 
-11. delete <id>
+12. delete <id>
     删除一条 Offer（只能删除自己提交的）
 
-12. delete --all
+13. delete --all
     删除你提交的所有 Offer
 """

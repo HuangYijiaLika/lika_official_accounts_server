@@ -53,10 +53,14 @@ class LexerTests(TestCase):
         self.assertEqual(result["page"], 2)
         self.assertTrue(result["sort-salary"])
 
-    def test_query_can_parse_id(self) -> None:
-        """验证 query --id 能解析出 id 字段。"""
-        result = parse_command("query --id 1A2b3C4d")
-        self.assertEqual(result["command"], "query")
+    def test_query_rejects_id(self) -> None:
+        """验证 query 不再支持 --id。"""
+        self.assertIsNone(parse_command("query --id 1A2b3C4d"))
+
+    def test_detail_command_can_be_parsed(self) -> None:
+        """验证 detail <id> 能被正确解析。"""
+        result = parse_command("detail 1A2b3C4d")
+        self.assertEqual(result["command"], "detail")
         self.assertEqual(result["id"], "1A2b3C4d")
 
     def test_group_commit_requires_four_values_per_offer(self) -> None:

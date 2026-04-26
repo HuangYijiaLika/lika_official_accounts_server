@@ -19,7 +19,7 @@ from main.constants import (
     MESSAGE_NO_PERMISSION,
     MESSAGE_NOT_OWNER,
     MESSAGE_OFFER_NOT_FOUND,
-    MESSAGE_ONLY_TEXT_OR_IMAGE,
+    MESSAGE_INIT,
     MESSAGE_UNKNOWN_COMMAND,
 )
 from main.lexer import parse_command
@@ -76,7 +76,7 @@ def wechat_distributor(request: HttpRequest) -> HttpResponse:
     if msg_type == "image":
         return handle_image_message(xml_data, from_user, to_user)
 
-    reply = build_text_reply(from_user, to_user, MESSAGE_ONLY_TEXT_OR_IMAGE)
+    reply = build_text_reply(from_user, to_user, MESSAGE_INIT)
     return HttpResponse(reply, content_type="application/xml")
 
 
@@ -169,6 +169,11 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
         return f"{MESSAGE_COMMIT_SUCCESS}\nID: {public_id}"
     if command == "query":
         return format_query_result(tokens)
+    if command == "detail":
+        offer = get_offer_by_public_id(tokens["id"])
+        if offer is None:
+            return MESSAGE_OFFER_NOT_FOUND
+        return _format_offer_detail("详情：", offer, include_meta=False)
     if command == "group-commit":
         public_ids = batch_create_offers(tokens["offers"], from_user)
         lines = ["收到啦，这些 Offer 已经保存。", "IDs:"]
@@ -180,7 +185,7 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
             return MESSAGE_OFFER_NOT_FOUND
         if result is False:
             return MESSAGE_NOT_OWNER
-        return _format_offer_detail("编辑成功：", result)
+        return _format_offer_detail("编辑成功：", result, include_meta=False)
     if command == "edit_replace":
         result = replace_offer_by_public_id(
             tokens["id"], from_user, tokens["company"], tokens["city"], tokens["position"], tokens["salary"]
@@ -189,7 +194,7 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
             return MESSAGE_OFFER_NOT_FOUND
         if result is False:
             return MESSAGE_NOT_OWNER
-        return _format_offer_detail("编辑成功：", result)
+        return _format_offer_detail("编辑成功：", result, include_meta=False)
     if command == "delete_one":
         result = delete_offer_by_public_id(tokens["id"], from_user)
         if result is None:
@@ -203,34 +208,29 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
     return MESSAGE_UNKNOWN_COMMAND
 
 
-def _format_offer_detail(title: str, offer) -> str:
+def _format_offer_detail(title: str, offer, include_meta: bool = True) -> str:
     """把 Offer 格式化为多行可读文本（用于 query/edit 的详情输出）。"""
-    username = offer.from_user.username if offer.from_user else ""
-    created_at = offer.created_at.isoformat(sep=" ", timespec="seconds")
-    return "\n".join(
-        [
-            title,
-            f"ID: {offer.public_id}",
-            f"company: {offer.company}",
-            f"city: {offer.city}",
-            f"position: {offer.position}",
-            f"salary: {offer.salary}",
-            f"created_at: {created_at}",
-            f"from_user: {username}",
-        ]
-    )
+    lines = [
+        title,
+        f"ID: {offer.public_id}",
+        f"company: {offer.company}",
+        f"city: {offer.city}",
+        f"position: {offer.position}",
+        f"salary: {offer.salary}",
+    ]
+    if include_meta:
+        created_at = offer.created_at.isoformat(sep=" ", timespec="seconds")
+        username = offer.from_user.username if offer.from_user else ""
+        lines.append(f"created_at: {created_at}")
+        lines.append(f"from_user: {username}")
+    return "\n".join(lines)
 
 
 def format_query_result(tokens: dict) -> str:
-    """格式化查询结果：支持 query --id 单条详情，以及普通分页列表。"""
-    public_id = tokens.get("id")
-    if public_id:
-        offer = get_offer_by_public_id(public_id)
-        if offer is None:
-            return MESSAGE_OFFER_NOT_FOUND
-        return _format_offer_detail("查询结果：", offer)
-
+    """格式化查询结果：返回分页列表。"""
     offers, current_page, page_count = list_offers_with_page(tokens)
+    if not offers:
+        return MESSAGE_OFFER_NOT_FOUND
     lines = [f"第 {current_page} / {page_count} 页", "{"]
     for offer in offers:
         lines.append(f"  {offer}")

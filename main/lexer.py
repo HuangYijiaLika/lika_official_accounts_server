@@ -125,11 +125,16 @@ def parse_command(command: str) -> dict | None:
             "salary": int(salary),
         }
 
-    # query 支持多种可选参数（--id / --company / --city / --position / --page / sort flags）
+    detail_match = re.fullmatch(r"detail\s+(\S+)", command)
+    if detail_match:
+        return {"command": "detail", "id": detail_match.group(1)}
+
+    # query 支持多种可选参数（--company / --city / --position / --page / sort flags）
     if re.match(r"query\b", command):
+        if has_flag(r"(?:--id)\b", command):
+            return None
         return {
             "command": "query",
-            "id": match_optional_text(r"(?:--id)\s+(\S+)", command),
             "company": match_optional_text(r"(?:--company|-co)\s+(\S+)", command),
             "city": match_optional_text(r"(?:--city|-ci)\s+(\S+)", command),
             "position": match_optional_text(r"(?:--position|-po)\s+(\S+)", command),
@@ -137,6 +142,7 @@ def parse_command(command: str) -> dict | None:
             "sort-new": has_flag(r"--sort-new\b", command),
             "sort-salary": has_flag(r"--sort-salary\b", command),
         }
+
 
     group_match = re.fullmatch(r"group-commit((?:\s+\S+)+)", command)
     if group_match:

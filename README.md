@@ -2,14 +2,11 @@
 
 这是一个基于 Django + 微信公众号消息接口的练手项目。
 
-它的目标很简单：
-
 - 用户发送文本命令给公众号
 - 后端解析命令
 - 把 Offer 数据存进 SQLite
 - 按条件查询 Offer 并返回结果
-
-这个版本参考了 `info/wechat_robot` 中的原项目，但代码和说明都尽量写得更直白，方便第一次做项目的大一新生阅读。
+- 这个项目的代码和说明都尽量写得更直白，方便第一次做项目的同学阅读。
 
 ## 1. 这个项目能做什么
 
@@ -17,6 +14,8 @@
 - `commit`：提交一条 Offer
 - `query`：查询 Offer
 - `group-commit`：一次提交多条 Offer
+- `edit`：编辑一条 Offer（按字段更新 / 整体替换）
+- `delete`：删除 Offer（单条 / 删除自己的全部）
 - 自动记录用户
 - 简单的高频请求检测
 - 接收微信文本消息
@@ -31,6 +30,7 @@ myAssign1/
 ├── main/                  # 主应用
 │   ├── migrations/        # 数据库迁移文件
 │   │   ├── 0001_initial.py
+│   │   ├── 0002_*.py
 │   │   └── __init__.py
 │   ├── services/          # 业务逻辑
 │   │   ├── __init__.py
@@ -45,7 +45,8 @@ myAssign1/
 │   ├── tests.py           # 基础测试
 │   ├── urls.py
 │   ├── views.py           # 微信请求入口
-│   └── wechat_utils.py    # XML 回复和微信工具函数
+│   ├── wechat_utils.py    # XML 回复和微信工具函数
+│   └── pics/              # 保存收到的图片（运行后自动生成）
 ├── wechat_robot/          # Django 项目配置
 │   ├── __init__.py
 │   ├── asgi.py
@@ -72,6 +73,12 @@ pip install -r requirements.txt
 ```
 
 ### 第二步：生成数据库表
+
+```bash
+python manage.py migrate
+```
+
+如果你修改了 `main/models.py` 里的模型，再执行：
 
 ```bash
 python manage.py makemigrations
@@ -111,11 +118,31 @@ help
 示例输出（公众号回复文本）：
 
 ```text
-可用命令：
-1) help
-2) commit <company> <city> <position> <salary>
-3) query [--company X] [--city Y] [--position Z] [--min-salary N] [--max-salary N] [--sort-salary] [--page P]
-4) group-commit <company> <city> <position> <salary> ...（一次提交多条，参数每 4 个一组）
+简易版 Offer Show 命令说明
+
+1. help
+   查看帮助信息
+
+2. commit <公司> <城市> <岗位> <薪资>
+   提交一条 Offer
+
+3. query [--id ID] [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]
+   查询 Offer
+
+4. group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...
+   一次提交多条 Offer
+
+5. edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]
+   编辑一条 Offer（按字段更新，至少提供 1 个字段）
+
+6. edit <id> <公司> <城市> <岗位> <薪资>
+   编辑一条 Offer（整体替换）
+
+7. delete <id>
+   删除一条 Offer（只能删除自己提交的）
+
+8. delete --all
+   删除你提交的所有 Offer
 ```
 
 ### `commit`
@@ -127,7 +154,8 @@ commit Tencent Shenzhen Backend 30000
 示例输出（公众号回复文本）：
 
 ```text
-提交成功：Tencent Shenzhen Backend 30000
+收到啦，这条 Offer 已经保存。
+ID: 1a2b3c4d
 ```
 
 ### `query`
@@ -142,9 +170,11 @@ query --city Shenzhen --page 2
 示例输出（公众号回复文本，示例为 `query --city Shenzhen --sort-salary`）：
 
 ```text
-查询结果（第 1/1 页，共 2 条）：
-1) Tencent | Shenzhen | Backend | 30000 | 2026-04-21 10:12
-2) ByteDance | Shenzhen | Backend | 28000 | 2026-04-21 10:05
+第 1 / 1 页
+{
+  Offer(Tencent, Shenzhen, Backend, 30000)
+  Offer(ByteDance, Shenzhen, Backend, 28000)
+}
 ```
 
 ### `group-commit`
@@ -156,9 +186,42 @@ group-commit Tencent Shenzhen Backend 30000 Alibaba Beijing PM 25000
 示例输出（公众号回复文本）：
 
 ```text
-批量提交成功：2 条
-1) Tencent Shenzhen Backend 30000
-2) Alibaba Beijing PM 25000
+收到啦，这些 Offer 已经保存。
+IDs:
+1a2b3c4d
+9e8f7a6b
+```
+
+### `edit`
+
+```text
+edit 1a2b3c4d --salary 32000
+```
+
+示例输出（公众号回复文本）：
+
+```text
+编辑成功：
+ID: 1a2b3c4d
+company: Tencent
+city: Shenzhen
+position: Backend
+salary: 32000
+created_at: 2026-04-21 10:12:00
+from_user: some_user
+```
+
+### `delete`
+
+```text
+delete 1a2b3c4d
+```
+
+示例输出（公众号回复文本）：
+
+```text
+删除成功。
+ID: 1a2b3c4d
 ```
 
 ## 6. 数据库里有什么表
@@ -175,6 +238,7 @@ group-commit Tencent Shenzhen Backend 30000 Alibaba Beijing PM 25000
 
 用来保存 Offer：
 
+- `public_id`：对外暴露的 8 位 ID（用于 query/edit/delete）
 - `company`：公司
 - `city`：城市
 - `position`：岗位
@@ -223,17 +287,3 @@ https://你的域名/wechat/
 python manage.py test
 ```
 
-## 10. 这个教学版和原项目有什么不同
-
-- 直接放在仓库根目录，运行更省事
-- 去掉了通配导入，依赖关系更清楚
-- 用 JSON 替代 `eval`
-- 函数更短，命名更直白
-- 补了基础测试
-- 增加了适合新手阅读的说明文档
-
-## 11. 参考资料
-
-- 原项目代码：`info/wechat_robot/`
-- 原 README：`info/wechat_robot/README.md`
-- 原学习资料：`info/wechat_robot/guide/`

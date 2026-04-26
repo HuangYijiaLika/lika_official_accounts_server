@@ -2,6 +2,8 @@
 
 这是一个基于 Django + 微信公众号消息接口的练手项目。
 
+项目来源：北京交通大学-软件学院-API设计与实现-第二次作业
+
 - 用户发送文本命令给公众号
 - 后端解析命令
 - 把 Offer 数据存进 SQLite
@@ -29,7 +31,7 @@
 ## 2. 项目结构
 
 ```text
-myAssign1/
+lika_official_accounts_server/
 ├── docs/                  # 新手说明文档
 │   └── 新手复刻说明.md
 ├── main/                  # 主应用
@@ -402,10 +404,10 @@ sudo apt install -y python3 python3-venv python3-pip nginx
 
 ### 10.3 上传代码并安装依赖
 
-把项目上传到服务器（例如放在 `/srv/myAssign1/`），然后：
+把项目上传到服务器（例如放在 `/srv/lika_official_accounts_server/`），然后：
 
 ```bash
-cd /srv/myAssign1
+cd /srv/lika_official_accounts_server
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -436,8 +438,8 @@ WECHAT_TOKEN = "your-wechat-token"
 ### 10.5 初始化数据库
 
 ```bash
-source /srv/myAssign1/.venv/bin/activate
-cd /srv/myAssign1
+source /srv/lika_official_accounts_server/.venv/bin/activate
+cd /srv/lika_official_accounts_server
 python manage.py migrate
 ```
 
@@ -467,21 +469,21 @@ python manage.py collectstatic
 
 创建 systemd 服务文件：
 
-`/etc/systemd/system/myassign1.service`
+`/etc/systemd/system/lika_official_accounts_server.service`
 
 内容如下（把路径按你的实际目录改掉）：
 
 ```ini
 [Unit]
-Description=myAssign1 Django (gunicorn)
+Description=lika_official_accounts_server Django (gunicorn)
 After=network.target
 
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/srv/myAssign1
-Environment="PATH=/srv/myAssign1/.venv/bin"
-ExecStart=/srv/myAssign1/.venv/bin/gunicorn wechat_robot.wsgi:application --workers 2 --bind 127.0.0.1:8000
+WorkingDirectory=/srv/lika_official_accounts_server
+Environment="PATH=/srv/lika_official_accounts_server/.venv/bin"
+ExecStart=/srv/lika_official_accounts_server/.venv/bin/gunicorn wechat_robot.wsgi:application --workers 2 --bind 127.0.0.1:8000
 Restart=always
 
 [Install]
@@ -492,15 +494,15 @@ WantedBy=multi-user.target
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now myassign1
-sudo systemctl status myassign1
+sudo systemctl enable --now lika_official_accounts_server
+sudo systemctl status lika_official_accounts_server
 ```
 
 ### 10.8 配置 Nginx 反向代理（绑定 80/443）
 
 创建 Nginx 站点配置：
 
-`/etc/nginx/sites-available/myassign1`
+`/etc/nginx/sites-available/lika_official_accounts_server`
 
 ```nginx
    server {
@@ -508,7 +510,7 @@ sudo systemctl status myassign1
       server_name example.com;
 
       location /static/ {
-         alias /srv/myAssign1/staticfiles/;
+         alias /srv/lika_official_accounts_server/staticfiles/;
       }
 
       location / {
@@ -524,7 +526,7 @@ sudo systemctl status myassign1
 启用并重载：
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/myassign1 /etc/nginx/sites-enabled/myassign1
+sudo ln -s /etc/nginx/sites-available/lika_official_accounts_server /etc/nginx/sites-enabled/lika_official_accounts_server
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -560,7 +562,20 @@ https://example.com/wechat/
 ### 10.11 常见问题排查
 
 - Nginx 502：Gunicorn 没起来或端口不对  
-  - `sudo systemctl status myassign1`
-  - `sudo journalctl -u myassign1 -n 200 --no-pager`
+  - `sudo systemctl status lika_official_accounts_server`
+  - `sudo journalctl -u lika_official_accounts_server -n 200 --no-pager`
 - 公众号校验失败：确认 URL、Token、是否公网可访问、是否走了 HTTPS 证书
 - `/admin/` 样式丢失：通常是 `DEBUG=False` 但没配 `STATIC_ROOT + collectstatic + Nginx /static/`
+- 能直连 `http://你的域名/wechat/` 显示 `wechat server is running`，但公众号发消息收不到，且 `/admin/` 打开报 500：常见原因是运行用户（如 `www-data`）对项目目录或数据库没有写权限  
+  - 典型现象：健康检查页面正常（只走读请求），但一涉及写入（保存消息、登录写 session、写 SQLite）就失败
+  - 先看日志定位权限错误：  
+    - `sudo journalctl -u lika_official_accounts_server -n 200 --no-pager`  
+    - `sudo tail -n 200 /var/log/nginx/error.log`
+  - 常见报错关键词：`Permission denied`、`attempt to write a readonly database`
+  - 修复思路：保证 Gunicorn 运行用户与项目文件属主/权限一致，至少对数据库文件及其目录可写
+    - `sudo chown -R www-data:www-data /srv/lika_official_accounts_server`
+    - `sudo chmod 755 /srv/lika_official_accounts_server`
+    - `sudo chmod 664 /srv/lika_official_accounts_server/db.sqlite3`
+    - `sudo chmod 775 /srv/lika_official_accounts_server/main/pics /srv/lika_official_accounts_server/staticfiles`
+    - `sudo systemctl restart lika_official_accounts_server`
+  - 如果你在 systemd 里不是用 `www-data`，请把上面命令里的用户组替换为实际 `User/Group`

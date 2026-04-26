@@ -7,13 +7,14 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+STATIC_ROOT = BASE_DIR / "staticfiles"
 SECRET_KEY = "django-insecure-change-me-for-production"
 DEBUG = True
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
+    "39.106.191.201",
 ]
 
 INSTALLED_APPS = [
@@ -85,9 +86,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-
-WECHAT_TOKEN = "dev-token"
-WECHAT_APP_ID = "dev-app-id"
-WECHAT_APP_SECRET = "dev-app-secret"
+DEBUG = False
+WECHAT_TOKEN = "offershowtoken20260426"
+WECHAT_APP_ID = "wx413f584b41fbc2cf"
+WECHAT_APP_SECRET = "d5705e84fe8dc4324be900f6889cad45"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

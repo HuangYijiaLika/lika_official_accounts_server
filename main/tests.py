@@ -27,7 +27,7 @@ from main.services.offer_services import (
     update_offer_by_public_id,
 )
 from main.services.user_services import check_user_state, create_user, get_user
-from main.wechat_utils import wechat_heartbeat
+from main.wechat_utils import build_text_reply, wechat_heartbeat
 
 
 class LexerTests(TestCase):
@@ -369,3 +369,11 @@ class WechatHeartbeatTests(TestCase):
         )
         response = wechat_heartbeat(request)
         self.assertEqual(response.status_code, 403)
+
+
+class WechatReplyTests(TestCase):
+    def test_build_text_reply_keeps_angle_brackets_in_cdata(self) -> None:
+        """验证被动回复内容不对 < > 做实体转义（保持在 CDATA 中原样显示）。"""
+        xml = build_text_reply("to", "from", "a<b>c</b>d")
+        self.assertIn("<Content><![CDATA[a<b>c</b>d]]></Content>", xml)
+        self.assertNotIn("&lt;", xml)

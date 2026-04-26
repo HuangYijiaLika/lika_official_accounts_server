@@ -5,7 +5,6 @@
 
 import hashlib
 import time
-from xml.sax.saxutils import escape
 
 import requests
 from django.conf import settings
@@ -18,7 +17,7 @@ expire_time = 0.0
 
 def build_text_reply(to_user: str, from_user: str, content: str) -> str:
     """生成微信 text 类型回复的 XML 字符串。"""
-    safe_content = escape(content)
+    safe_content = content.replace("]]>", "]]]]><![CDATA[>")
     return f"""<xml>
 <ToUserName><![CDATA[{to_user}]]></ToUserName>
 <FromUserName><![CDATA[{from_user}]]></FromUserName>

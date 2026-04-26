@@ -448,13 +448,13 @@ python manage.py createsuperuser
 
 当 `DEBUG=False` 时，Django 不会自动帮你提供静态文件（包括 `/admin/` 的静态资源），推荐这样做：
 
-1. 在 `wechat_robot/settings.py` 增加一行：
+1) 在 `wechat_robot/settings.py` 增加一行：
 
 ```python
 STATIC_ROOT = BASE_DIR / "staticfiles"
 ```
 
-1. 收集静态文件：
+2) 收集静态文件：
 
 ```bash
 python manage.py collectstatic
@@ -500,22 +500,22 @@ sudo systemctl status myassign1
 `/etc/nginx/sites-available/myassign1`
 
 ```nginx
-server {
-    listen 80;
-    server_name example.com;
+   server {
+      listen 80;
+      server_name example.com;
 
-    location /static/ {
-        alias /srv/myAssign1/staticfiles/;
-    }
+      location /static/ {
+         alias /srv/myAssign1/staticfiles/;
+      }
 
-    location / {
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://127.0.0.1:8000;
-    }
-}
+      location / {
+         proxy_set_header Host $host;
+         proxy_set_header X-Real-IP $remote_addr;
+         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+         proxy_set_header X-Forwarded-Proto $scheme;
+         proxy_pass http://127.0.0.1:8000;
+      }
+   }
 ```
 
 启用并重载：
@@ -556,9 +556,8 @@ https://example.com/wechat/
 
 ### 10.11 常见问题排查
 
-- Nginx 502：Gunicorn 没起来或端口不对
+- Nginx 502：Gunicorn 没起来或端口不对  
   - `sudo systemctl status myassign1`
   - `sudo journalctl -u myassign1 -n 200 --no-pager`
 - 公众号校验失败：确认 URL、Token、是否公网可访问、是否走了 HTTPS 证书
 - `/admin/` 样式丢失：通常是 `DEBUG=False` 但没配 `STATIC_ROOT + collectstatic + Nginx /static/`
-

@@ -87,8 +87,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 DEBUG = False
-WECHAT_TOKEN = "offershowtoken20260426"
-WECHAT_APP_ID = "wx413f584b41fbc2cf"
-WECHAT_APP_SECRET = "d5705e84fe8dc4324be900f6889cad45"
+WECHAT_TOKEN = ""
+WECHAT_APP_ID = ""
+WECHAT_APP_SECRET = ""
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

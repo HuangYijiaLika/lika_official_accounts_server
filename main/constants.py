@@ -20,12 +20,14 @@ REQUEST_QUEUE_LIMIT_SIZE = 30
 
 RECORDS_PER_PAGE = 10
 
-MESSAGE_HELLO = "Ciallo~"
+MESSAGE_HELLO = "你好！"
 MESSAGE_UNKNOWN_COMMAND = "这个命令我没有看懂。"
 MESSAGE_COMMIT_SUCCESS = "收到啦，这条 Offer 已经保存。"
 MESSAGE_VALUE_ERROR = "参数格式不对，请检查是不是把薪资写成了整数。"
 MESSAGE_ONLY_TEXT_OR_IMAGE = "目前只支持文本消息和图片消息。"
 MESSAGE_NO_PERMISSION = "你的账号目前不能继续使用查询功能。"
+MESSAGE_NOT_OWNER = "只能操作自己提交的 Offer。"
+MESSAGE_OFFER_NOT_FOUND = "没有找到对应的 Offer。"
 
 MESSAGE_HELP = """简易版 Offer Show 命令说明
 
@@ -40,4 +42,16 @@ MESSAGE_HELP = """简易版 Offer Show 命令说明
 
 4. group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...
    一次提交多条 Offer
+
+5. edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]
+   编辑一条 Offer（按字段更新，至少提供 1 个字段）
+
+6. edit <id> <公司> <城市> <岗位> <薪资>
+   编辑一条 Offer（整体替换）
+
+7. delete <id>
+   删除一条 Offer（只能删除自己提交的）
+
+8. delete --all
+   删除你提交的所有 Offer
 """

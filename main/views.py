@@ -16,6 +16,8 @@ from main.constants import (
     MESSAGE_HELLO,
     MESSAGE_HELP,
     MESSAGE_NO_PERMISSION,
+    MESSAGE_NOT_OWNER,
+    MESSAGE_OFFER_NOT_FOUND,
     MESSAGE_ONLY_TEXT_OR_IMAGE,
     MESSAGE_UNKNOWN_COMMAND,
 )
@@ -25,8 +27,13 @@ from main.services import (
     check_user_state,
     create_offer,
     create_user,
+    delete_all_offers_by_username,
+    delete_offer_by_public_id,
     get_user,
+    get_offer_by_public_id,
     list_offers_with_page,
+    replace_offer_by_public_id,
+    update_offer_by_public_id,
 )
 from main.wechat_utils import (
     build_image_reply,
@@ -105,17 +112,69 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
     if command == "help":
         return MESSAGE_HELP
     if command == "commit":
-        create_offer(tokens, from_user)
-        return MESSAGE_COMMIT_SUCCESS
+        public_id = create_offer(tokens, from_user)
+        return f"{MESSAGE_COMMIT_SUCCESS}\nID: {public_id}"
     if command == "query":
         return format_query_result(tokens)
     if command == "group-commit":
-        batch_create_offers(tokens["offers"], from_user)
-        return MESSAGE_COMMIT_SUCCESS
+        public_ids = batch_create_offers(tokens["offers"], from_user)
+        lines = ["收到啦，这些 Offer 已经保存。", "IDs:"]
+        lines.extend(public_ids)
+        return "\n".join(lines)
+    if command == "edit_update":
+        result = update_offer_by_public_id(tokens["id"], from_user, tokens["updates"])
+        if result is None:
+            return MESSAGE_OFFER_NOT_FOUND
+        if result is False:
+            return MESSAGE_NOT_OWNER
+        return _format_offer_detail("编辑成功：", result)
+    if command == "edit_replace":
+        result = replace_offer_by_public_id(
+            tokens["id"], from_user, tokens["company"], tokens["city"], tokens["position"], tokens["salary"]
+        )
+        if result is None:
+            return MESSAGE_OFFER_NOT_FOUND
+        if result is False:
+            return MESSAGE_NOT_OWNER
+        return _format_offer_detail("编辑成功：", result)
+    if command == "delete_one":
+        result = delete_offer_by_public_id(tokens["id"], from_user)
+        if result is None:
+            return MESSAGE_OFFER_NOT_FOUND
+        if result is False:
+            return MESSAGE_NOT_OWNER
+        return f"删除成功。\nID: {tokens['id']}"
+    if command == "delete_all":
+        count = delete_all_offers_by_username(from_user)
+        return f"已删除你提交的 Offer：{count} 条"
     return MESSAGE_UNKNOWN_COMMAND
 
 
+def _format_offer_detail(title: str, offer) -> str:
+    username = offer.from_user.username if offer.from_user else ""
+    created_at = offer.created_at.isoformat(sep=" ", timespec="seconds")
+    return "\n".join(
+        [
+            title,
+            f"ID: {offer.public_id}",
+            f"company: {offer.company}",
+            f"city: {offer.city}",
+            f"position: {offer.position}",
+            f"salary: {offer.salary}",
+            f"created_at: {created_at}",
+            f"from_user: {username}",
+        ]
+    )
+
+
 def format_query_result(tokens: dict) -> str:
+    public_id = tokens.get("id")
+    if public_id:
+        offer = get_offer_by_public_id(public_id)
+        if offer is None:
+            return MESSAGE_OFFER_NOT_FOUND
+        return _format_offer_detail("查询结果：", offer)
+
     offers, current_page, page_count = list_offers_with_page(tokens)
     lines = [f"第 {current_page} / {page_count} 页", "{"]
     for offer in offers:

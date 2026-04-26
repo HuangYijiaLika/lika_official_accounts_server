@@ -24,6 +24,7 @@ class Offer(models.Model):
     salary = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    public_id = models.CharField(max_length=8, unique=True, db_index=True, null=True, blank=True)
 
     def __str__(self) -> str:
         return f"Offer({self.company}, {self.city}, {self.position}, {self.salary})"

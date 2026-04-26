@@ -36,7 +36,7 @@ HELP_BY_COMMAND = {
     "my": "my [--page 页码]\n只查看我提交的 Offer（支持分页）。",
     "latest": "latest [N]\n查看全库最新 N 条 Offer（默认 5，最大 20），按 created_at 倒序。",
     "commit": "commit <公司> <城市> <岗位> <薪资>\n提交一条 Offer，并返回该条 Offer 的 8 位 ID。",
-    "query": "query [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]\n查询 Offer（分页列表）。",
+    "query": "query [--company 公司] [--city 城市] [--position 岗位] [--page 页码] [--sort-new] [--sort-salary]\n查询 Offer（分页列表）；company/city/position 支持模糊匹配（包含）。",
     "detail": "detail <id>\n查看某条 Offer 的详情（与 edit 成功后的展示一致）。",
     "group-commit": "group-commit <公司1> <城市1> <岗位1> <薪资1> [公司2] [城市2] [岗位2] [薪资2] ...\n一次提交多条 Offer，并返回每条的 8 位 ID。",
     "edit": "edit <id> [--company <公司>] [--city <城市>] [--position <岗位>] [--salary <薪资>]\n按字段更新；或 edit <id> <公司> <城市> <岗位> <薪资> 整体替换。",

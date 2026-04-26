@@ -172,6 +172,29 @@ class OfferServiceTests(TestCase):
         salaries = [offer.salary for offer in results]
         self.assertEqual(salaries[:2], [30000, 15000])
 
+    def test_query_fields_support_substring_match(self) -> None:
+        """验证 company/city/position 查询支持子串匹配（包含即命中）。"""
+        batch_create_offers(
+            [
+                {"company": "Tencent", "city": "Shenzhen", "position": "Backend", "salary": 30000},
+                {"company": "ByteDance", "city": "Beijing", "position": "Frontend", "salary": 20000},
+                {"company": "TenX", "city": "ShenZhen", "position": "Backoffice", "salary": 10000},
+            ],
+            "alice",
+        )
+
+        results, _, _ = list_offers_with_page({"company": "ten"})
+        companies = {offer.company for offer in results}
+        self.assertEqual(companies, {"Tencent", "TenX"})
+
+        results, _, _ = list_offers_with_page({"city": "shenz"})
+        cities = {offer.city for offer in results}
+        self.assertEqual(cities, {"Shenzhen", "ShenZhen"})
+
+        results, _, _ = list_offers_with_page({"position": "end"})
+        positions = {offer.position for offer in results}
+        self.assertEqual(positions, {"Backend", "Frontend"})
+
     def test_get_offer_by_public_id_works_case_insensitive(self) -> None:
         """验证 public_id 查询大小写不敏感。"""
         public_id = create_offer(

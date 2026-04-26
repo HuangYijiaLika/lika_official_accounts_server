@@ -167,7 +167,9 @@ def list_offers(filters: dict) -> QuerySet[Offer]:
     for field in FILTER_FIELDS:
         value = filters.get(field)
         if value is not None:
-            query &= Q(**{field: value})
+            value = str(value).strip()
+            if value:
+                query &= Q(**{f"{field}__icontains": value})
 
     from_user = filters.get("from_user")
     if from_user is not None:

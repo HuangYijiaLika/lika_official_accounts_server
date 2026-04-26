@@ -1,6 +1,6 @@
 """
 本文件提供 WSGI 入口（用于同步服务器部署，例如 Gunicorn/uWSGI 等）。
-教学版通常用不到，但这是 Django 默认生成的部署入口之一。
+这是 Django 默认生成的部署入口之一。
 """
 
 import os

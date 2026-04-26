@@ -1,0 +1,72 @@
+<svg width="704pt" height="52pt" viewBox="0.00 0.00 704.00 52.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 48.04)">
+<title>WeChatFlow</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-48.04 700.06,-48.04 700.06,4 -4,4"/>
+<!-- user -->
+<g id="node1" class="node">
+<title>user</title>
+<polygon fill="none" stroke="black" points="54,-44.04 0,-44.04 0,-8.04 54,-8.04 54,-44.04"/>
+<text xml:space="preserve" text-anchor="middle" x="27" y="-21.84" font-family="Times,serif" font-size="14.00">用户</text>
+</g>
+<!-- wechat -->
+<g id="node2" class="node">
+<title>wechat</title>
+<polygon fill="none" stroke="black" points="221.5,-44.04 153,-44.04 153,-8.04 221.5,-8.04 221.5,-44.04"/>
+<text xml:space="preserve" text-anchor="middle" x="187.25" y="-21.84" font-family="Times,serif" font-size="14.00">微信服务器</text>
+</g>
+<!-- user&#45;&gt;wechat -->
+<g id="edge1" class="edge">
+<title>user-&gt;wechat</title>
+<path fill="none" stroke="black" d="M54.49,-26.04C78.15,-26.04 113.31,-26.04 141.36,-26.04"/>
+<polygon fill="black" stroke="black" points="140.99,-29.54 150.99,-26.04 140.99,-22.54 140.99,-29.54"/>
+<text xml:space="preserve" text-anchor="middle" x="103.5" y="-30.24" font-family="Times,serif" font-size="14.00">发送文本消息</text>
+</g>
+<!-- wechat&#45;&gt;user -->
+<g id="edge6" class="edge">
+<title>wechat-&gt;user</title>
+<path fill="none" stroke="black" d="M152.63,-10.27C146.86,-8.19 140.84,-6.38 135,-5.24 107.52,0.12 99.32,0.89 72,-5.24 69.68,-5.76 67.34,-6.42 65.01,-7.17"/>
+<polygon fill="black" stroke="black" points="63.79,-3.89 55.73,-10.77 66.32,-10.42 63.79,-3.89"/>
+<text xml:space="preserve" text-anchor="middle" x="103.5" y="-9.44" font-family="Times,serif" font-size="14.00">展示回复</text>
+</g>
+<!-- backend -->
+<g id="node3" class="node">
+<title>backend</title>
+<polygon fill="none" stroke="black" points="483.48,-44.04 350.84,-44.04 350.84,-8.04 483.48,-8.04 483.48,-44.04"/>
+<text xml:space="preserve" text-anchor="middle" x="417.16" y="-21.84" font-family="Times,serif" font-size="14.00">Django 后端 /wechat/</text>
+</g>
+<!-- wechat&#45;&gt;backend -->
+<g id="edge2" class="edge">
+<title>wechat-&gt;backend</title>
+<path fill="none" stroke="black" d="M221.88,-26.04C252.71,-26.04 299.51,-26.04 339.45,-26.04"/>
+<polygon fill="black" stroke="black" points="339.27,-29.54 349.27,-26.04 339.27,-22.54 339.27,-29.54"/>
+<text xml:space="preserve" text-anchor="middle" x="286.17" y="-30.24" font-family="Times,serif" font-size="14.00">POST XML 回调</text>
+</g>
+<!-- backend&#45;&gt;wechat -->
+<g id="edge5" class="edge">
+<title>backend-&gt;wechat</title>
+<path fill="none" stroke="black" d="M350.5,-8.07C344.56,-6.93 338.62,-5.95 332.84,-5.24 291.67,-0.18 280.22,2.71 239.5,-5.24 237.22,-5.69 234.91,-6.23 232.6,-6.86"/>
+<polygon fill="black" stroke="black" points="231.78,-3.45 223.31,-9.81 233.9,-10.12 231.78,-3.45"/>
+<text xml:space="preserve" text-anchor="middle" x="286.17" y="-9.44" font-family="Times,serif" font-size="14.00">回复 XML</text>
+</g>
+<!-- db -->
+<g id="node4" class="node">
+<title>db</title>
+<polygon fill="none" stroke="black" points="696.06,-44.04 604.61,-44.04 604.61,-8.04 696.06,-8.04 696.06,-44.04"/>
+<text xml:space="preserve" text-anchor="middle" x="650.33" y="-21.84" font-family="Times,serif" font-size="14.00">SQLite 数据库</text>
+</g>
+<!-- backend&#45;&gt;db -->
+<g id="edge3" class="edge">
+<title>backend-&gt;db</title>
+<path fill="none" stroke="black" d="M483.79,-26.04C518.3,-26.04 560.16,-26.04 593.16,-26.04"/>
+<polygon fill="black" stroke="black" points="592.92,-29.54 602.92,-26.04 592.92,-22.54 592.92,-29.54"/>
+<text xml:space="preserve" text-anchor="middle" x="544.05" y="-30.24" font-family="Times,serif" font-size="14.00">读写 Offer/User</text>
+</g>
+<!-- db&#45;&gt;backend -->
+<g id="edge4" class="edge">
+<title>db-&gt;backend</title>
+<path fill="none" stroke="black" d="M604.2,-9.18C598.35,-7.56 592.39,-6.17 586.61,-5.24 549.26,0.79 539.03,-0.62 501.48,-5.24 499.32,-5.51 497.13,-5.81 494.92,-6.14"/>
+<polygon fill="black" stroke="black" points="494.57,-2.65 485.32,-7.81 495.77,-9.55 494.57,-2.65"/>
+<text xml:space="preserve" text-anchor="middle" x="544.05" y="-9.44" font-family="Times,serif" font-size="14.00">查询结果</text>
+</g>
+</g>
+</svg>

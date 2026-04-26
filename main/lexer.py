@@ -114,15 +114,19 @@ def parse_command(command: str) -> dict | None:
     if re.fullmatch(r"help", command):
         return {"command": "help"}
 
-    commit_match = re.fullmatch(r"commit\s+(\S+)\s+(\S+)\s+(\S+)\s+(\d+)", command)
+    commit_match = re.fullmatch(r"commit\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)", command)
     if commit_match:
-        company, city, position, salary = commit_match.groups()
+        company, city, position, salary_text = commit_match.groups()
+        try:
+            salary = int(salary_text)
+        except Exception:
+            return {"command": "value_error"}
         return {
             "command": "commit",
             "company": company,
             "city": city,
             "position": position,
-            "salary": int(salary),
+            "salary": salary,
         }
 
     detail_match = re.fullmatch(r"detail\s+(\S+)", command)
@@ -152,12 +156,16 @@ def parse_command(command: str) -> dict | None:
 
         offers = []
         for index in range(0, len(raw_items), 4):
+            try:
+                salary = int(raw_items[index + 3])
+            except Exception:
+                return {"command": "value_error"}
             offers.append(
                 {
                     "company": raw_items[index],
                     "city": raw_items[index + 1],
                     "position": raw_items[index + 2],
-                    "salary": int(raw_items[index + 3]),
+                    "salary": salary,
                 }
             )
         return {"command": "group-commit", "offers": offers}

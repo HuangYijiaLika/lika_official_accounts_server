@@ -21,6 +21,7 @@ from main.constants import (
     MESSAGE_OFFER_NOT_FOUND,
     MESSAGE_INIT,
     MESSAGE_UNKNOWN_COMMAND,
+    MESSAGE_VALUE_ERROR,
 )
 from main.lexer import parse_command
 from main.services import (
@@ -117,6 +118,8 @@ def wechat_command_distributor(from_user: str, tokens: dict) -> str:
         return MESSAGE_NO_PERMISSION
 
     command = tokens["command"]
+    if command == "value_error":
+        return MESSAGE_VALUE_ERROR
     if command == "ping":
         return "pong"
     if command == "help":

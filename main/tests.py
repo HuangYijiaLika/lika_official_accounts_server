@@ -45,6 +45,11 @@ class LexerTests(TestCase):
             },
         )
 
+    def test_commit_rejects_non_int_salary(self) -> None:
+        """验证 commit 的薪资必须是整数。"""
+        result = parse_command("commit Tencent Shenzhen Backend abc")
+        self.assertEqual(result, {"command": "value_error"})
+
     def test_query_command_can_be_parsed(self) -> None:
         """验证 query 的常用选项能被正确解析。"""
         result = parse_command("query --city Shenzhen --sort-salary --page 2")
@@ -67,6 +72,11 @@ class LexerTests(TestCase):
         """验证 group-commit 参数不足时解析失败。"""
         result = parse_command("group-commit Tencent Shenzhen Backend")
         self.assertIsNone(result)
+
+    def test_group_commit_rejects_non_int_salary(self) -> None:
+        """验证 group-commit 的薪资必须是整数。"""
+        result = parse_command("group-commit Tencent Shenzhen Backend abc")
+        self.assertEqual(result, {"command": "value_error"})
 
     def test_edit_update_can_be_parsed(self) -> None:
         """验证 edit update 形式（--field value）能被正确解析。"""

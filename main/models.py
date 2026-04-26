@@ -29,4 +29,5 @@ class Offer(models.Model):
 
     def __str__(self) -> str:
         """在日志/admin 等场景中显示该 Offer 的简短描述。"""
-        return f"Offer({self.company}, {self.city}, {self.position}, {self.salary})"
+        public_id = self.public_id or ""
+        return f"Offer({public_id}, {self.company}, {self.city}, {self.position}, {self.salary})"

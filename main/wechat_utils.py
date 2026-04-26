@@ -3,6 +3,7 @@
 包括：组装微信要求的 XML 回复（文本/图片）、GET 心跳/验证辅助、以及 access_token 的获取与缓存。
 """
 
+import hashlib
 import time
 from xml.sax.saxutils import escape
 
@@ -40,11 +41,26 @@ def build_image_reply(to_user: str, from_user: str, media_id: str) -> str:
 </xml>"""
 
 
+def _check_wechat_signature(signature: str, timestamp: str, nonce: str) -> bool:
+    """按微信文档规则校验签名：sha1(sort([token,timestamp,nonce]).join())."""
+    token = settings.WECHAT_TOKEN
+    parts = [token, timestamp, nonce]
+    parts.sort()
+    raw = "".join(parts).encode("utf-8")
+    digest = hashlib.sha1(raw).hexdigest()
+    return digest == signature
+
+
 def wechat_heartbeat(request: HttpRequest) -> HttpResponse:
     """处理微信服务器 GET 验证：有 echostr 返回 echostr，否则返回运行提示。"""
     echostr = request.GET.get("echostr")
     if echostr:
-        return HttpResponse(echostr)
+        signature = request.GET.get("signature", "")
+        timestamp = request.GET.get("timestamp", "")
+        nonce = request.GET.get("nonce", "")
+        if signature and timestamp and nonce and _check_wechat_signature(signature, timestamp, nonce):
+            return HttpResponse(echostr)
+        return HttpResponse("invalid signature", status=403)
     return HttpResponse("wechat server is running")
 
 

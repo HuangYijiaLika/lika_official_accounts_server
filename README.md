@@ -198,8 +198,8 @@ latest 5
 ```text
 最新 2 条 Offer
 {
-  Offer(Tencent, Shenzhen, Backend, 30000)
-  Offer(ByteDance, Shenzhen, Backend, 28000)
+  Offer(1a2b3c4d, Tencent, Shenzhen, Backend, 30000)
+  Offer(9e8f7a6b, ByteDance, Shenzhen, Backend, 28000)
 }
 ```
 
@@ -231,8 +231,8 @@ my --page 1
 ```text
 我的 Offer（第 1 / 1 页）
 {
-  Offer(Tencent, Shenzhen, Backend, 30000)
-  Offer(ByteDance, Shenzhen, Backend, 28000)
+  Offer(1a2b3c4d, Tencent, Shenzhen, Backend, 30000)
+  Offer(9e8f7a6b, ByteDance, Shenzhen, Backend, 28000)
 }
 ```
 
@@ -263,8 +263,8 @@ query --city Shenzhen --page 2
 ```text
 第 1 / 1 页
 {
-  Offer(Tencent, Shenzhen, Backend, 30000)
-  Offer(ByteDance, Shenzhen, Backend, 28000)
+  Offer(1a2b3c4d, Tencent, Shenzhen, Backend, 30000)
+  Offer(9e8f7a6b, ByteDance, Shenzhen, Backend, 28000)
 }
 ```
 
@@ -377,3 +377,187 @@ https://你的域名/wechat/
 ```bash
 python manage.py test
 ```
+
+## 10. 部署到服务器（详细教程）
+
+下面以一台 Ubuntu 22.04 服务器为例，演示把本项目部署成可被微信回调访问的公网服务。
+
+### 10.1 准备条件
+
+- 一台公网服务器（能被外网访问）
+- 一个域名（建议）：例如 `example.com`，并把域名 A 记录解析到服务器公网 IP
+- 放通端口：80（HTTP）与 443（HTTPS）
+
+微信的“服务器地址 URL”要求以 `http://` 或 `https://` 开头，且通常需要公网可访问的 80/443 端口。
+
+### 10.2 在服务器上安装运行环境
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip nginx
+```
+
+### 10.3 上传代码并安装依赖
+
+把项目上传到服务器（例如放在 `/srv/myAssign1/`），然后：
+
+```bash
+cd /srv/myAssign1
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install gunicorn
+```
+
+### 10.4 配置 Django（生产建议）
+
+打开 `wechat_robot/settings.py`，至少做这些修改（示例）：
+
+- `DEBUG = False`
+- `SECRET_KEY` 改成你自己的随机字符串（不要公开）
+- `ALLOWED_HOSTS` 加上你的域名（以及需要时的公网 IP）
+- `WECHAT_TOKEN` 填一个你自定义的字符串（稍后要在公众号后台填同一个）
+
+例如：
+
+```python
+DEBUG = False
+ALLOWED_HOSTS = ["example.com"]
+WECHAT_TOKEN = "your-wechat-token"
+```
+
+关于 `WECHAT_APP_ID/WECHAT_APP_SECRET`：
+
+- 如果你没有真实的 appid/secret，建议保持空字符串（否则会尝试请求微信 `access_token` 并失败）。
+
+### 10.5 初始化数据库
+
+```bash
+source /srv/myAssign1/.venv/bin/activate
+cd /srv/myAssign1
+python manage.py migrate
+```
+
+如需使用 Django 后台（可选）：
+
+```bash
+python manage.py createsuperuser
+```
+
+### 10.6 配置静态文件（推荐）
+
+当 `DEBUG=False` 时，Django 不会自动帮你提供静态文件（包括 `/admin/` 的静态资源），推荐这样做：
+
+1) 在 `wechat_robot/settings.py` 增加一行：
+
+```python
+STATIC_ROOT = BASE_DIR / "staticfiles"
+```
+
+2) 收集静态文件：
+
+```bash
+python manage.py collectstatic
+```
+
+### 10.7 用 Gunicorn 启动 Django（systemd 常驻）
+
+创建 systemd 服务文件：
+
+`/etc/systemd/system/myassign1.service`
+
+内容如下（把路径按你的实际目录改掉）：
+
+```ini
+[Unit]
+Description=myAssign1 Django (gunicorn)
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/myAssign1
+Environment="PATH=/srv/myAssign1/.venv/bin"
+ExecStart=/srv/myAssign1/.venv/bin/gunicorn wechat_robot.wsgi:application --workers 2 --bind 127.0.0.1:8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启动并设置开机自启：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now myassign1
+sudo systemctl status myassign1
+```
+
+### 10.8 配置 Nginx 反向代理（绑定 80/443）
+
+创建 Nginx 站点配置：
+
+`/etc/nginx/sites-available/myassign1`
+
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+
+    location /static/ {
+        alias /srv/myAssign1/staticfiles/;
+    }
+
+    location / {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://127.0.0.1:8000;
+    }
+}
+```
+
+启用并重载：
+
+```bash
+sudo ln -s /etc/nginx/sites-available/myassign1 /etc/nginx/sites-enabled/myassign1
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+此时访问：
+
+- `http://example.com/wechat/` 应该能看到 `wechat server is running`
+
+### 10.9 配置 HTTPS（Let’s Encrypt）
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d example.com
+```
+
+完成后，Nginx 会自动升级为 HTTPS，并配置自动续期。
+
+### 10.10 在公众号后台配置“服务器地址”
+
+在公众号后台把“服务器地址 URL”填写为：
+
+```text
+https://example.com/wechat/
+```
+
+并填写：
+
+- Token：与你 `settings.WECHAT_TOKEN` 完全一致
+- 消息加解密方式：选择明文模式（本项目目前按明文 XML 处理）
+
+如果你看到 403（`invalid signature`），基本就是 Token 没对上或 URL 配错（例如少了 `/wechat/`）。
+
+### 10.11 常见问题排查
+
+- Nginx 502：Gunicorn 没起来或端口不对  
+  - `sudo systemctl status myassign1`
+  - `sudo journalctl -u myassign1 -n 200 --no-pager`
+- 公众号校验失败：确认 URL、Token、是否公网可访问、是否走了 HTTPS 证书
+- `/admin/` 样式丢失：通常是 `DEBUG=False` 但没配 `STATIC_ROOT + collectstatic + Nginx /static/`

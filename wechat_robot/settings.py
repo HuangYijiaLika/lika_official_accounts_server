@@ -86,8 +86,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-WECHAT_TOKEN = "change-me"
-WECHAT_APP_ID = ""
-WECHAT_APP_SECRET = ""
+WECHAT_TOKEN = "dev-token"
+WECHAT_APP_ID = "dev-app-id"
+WECHAT_APP_SECRET = "dev-app-secret"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

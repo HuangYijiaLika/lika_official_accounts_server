@@ -4,9 +4,11 @@
 """
 
 from datetime import timedelta
+import hashlib
 from unittest import mock
 
 from django.test import TestCase
+from django.test import RequestFactory
 from django.utils import timezone
 
 from main.constants import AUTHORITY_CHECK_FAILED, AUTHORITY_CHECK_PASS
@@ -25,6 +27,7 @@ from main.services.offer_services import (
     update_offer_by_public_id,
 )
 from main.services.user_services import check_user_state, create_user, get_user
+from main.wechat_utils import wechat_heartbeat
 
 
 class LexerTests(TestCase):
@@ -335,3 +338,34 @@ class UserServiceTests(TestCase):
             "bob",
         )
         self.assertEqual(Offer.objects.count(), 1)
+
+
+class WechatHeartbeatTests(TestCase):
+    def test_wechat_heartbeat_returns_echostr_when_signature_is_valid(self) -> None:
+        """验证微信 GET 接入校验：签名正确时原样返回 echostr。"""
+        from django.conf import settings
+
+        token = settings.WECHAT_TOKEN
+        timestamp = "1700000000"
+        nonce = "123456"
+        echostr = "hello"
+        parts = [token, timestamp, nonce]
+        parts.sort()
+        signature = hashlib.sha1("".join(parts).encode("utf-8")).hexdigest()
+
+        request = RequestFactory().get(
+            "/wechat/",
+            data={"signature": signature, "timestamp": timestamp, "nonce": nonce, "echostr": echostr},
+        )
+        response = wechat_heartbeat(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode("utf-8"), echostr)
+
+    def test_wechat_heartbeat_rejects_invalid_signature(self) -> None:
+        """验证微信 GET 接入校验：签名错误时返回 403。"""
+        request = RequestFactory().get(
+            "/wechat/",
+            data={"signature": "bad", "timestamp": "1", "nonce": "2", "echostr": "x"},
+        )
+        response = wechat_heartbeat(request)
+        self.assertEqual(response.status_code, 403)
